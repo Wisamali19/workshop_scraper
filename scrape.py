@@ -69,7 +69,7 @@ for game in games:
 
     rows.append({
         "title": title,
-        "price_tag": price_eur,
+        "price_tag": price_tag,
         "discount": discount,
         "release_date": release_date,
         "platforms": ", ".join(platforms),
