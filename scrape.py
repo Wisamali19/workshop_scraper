@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import os
 import requests
 import pandas as pd
@@ -28,7 +28,7 @@ soup = BeautifulSoup(response.text, "html.parser")
 games = soup.select("a.search_result_row")[:10]
 
 rows = []
-scraped_at = datetime.utcnow()
+scraped_at = datetime.now(UTC)
 
 for game in games:
 
@@ -68,9 +68,7 @@ df = pd.DataFrame(rows)
 df["price_usd"] = (
     df["price_raw"]
     .astype(str)
-    .str.replace("$", "", regex=False)
-    .str.replace("€", "", regex=False)
-    .str.strip()
+    .str.replace(r'[^\d.]', '', regex=True) # Remove all characters that are not digits or a dot
 )
 
 df["price_usd"] = pd.to_numeric(df["price_usd"], errors="coerce").fillna(0)
@@ -83,8 +81,8 @@ df["price_tier"] = df["price_usd"].apply(
 # =========================
 # SUPABASE
 # =========================
-SUPABASE_URL = os.environ["SUPABASE_URL"]
-SUPABASE_KEY = os.environ["SUPABASE_KEY"]
+SUPABASE_URL = 'https://etntvokrvtlqjvfqjpkz.supabase.co'
+SUPABASE_KEY = 'sb_publishable_fLrEwzdyJzZ5iTPWrr6e3g_0xaHvAig'
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -97,8 +95,8 @@ for _, row in df.iterrows():
         "discount": str(row["discount"]),
         "release_date": str(row["release_date"]),
         "platforms": str(row["platforms"]),
-        "price_tier": str(row["price_tier"]),
-        "scraped_at": str(row["scraped_at"])
+        "price_tier": str(row["price_tier"])
+        # "scraped_at": str(row["scraped_at"]) # This column caused an APIError as it's not in the Supabase schema.
     })
 
 # insert
