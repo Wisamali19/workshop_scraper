@@ -43,11 +43,11 @@ for game in games:
     title = title_tag.get_text(strip=True) if title_tag else None
 
     # Price
-    price_tag = game.select_one(".discount_final_price")
-    if not price_tag:
-        price_tag = game.select_one(".search_price")
+    price_eur = game.select_one(".discount_final_price")
+    if not price_eur:
+        price_eur = game.select_one(".search_price")
 
-    price = price_tag.get_text(" ", strip=True) if price_tag else None
+    price = price_eur.get_text(" ", strip=True) if price_eur else None
 
     # Discount %
     discount_tag = game.select_one(".discount_pct")
@@ -69,7 +69,7 @@ for game in games:
 
     rows.append({
         "title": title,
-        "price_tag": price_tag,
+        "price_eur": price_eur,
         "discount": discount,
         "release_date": release_date,
         "platforms": ", ".join(platforms),
@@ -91,22 +91,8 @@ print(f"Columns: {list(df.columns)}")
 print(f"Data types:\n{df.dtypes}")
 print(f"\nFirst 3 rows:")
 
-
-"""# New Section"""
-
-# See how many missing values exist per column
-
-
-# The 'rating' column does not exist in the current DataFrame scraped from Steam,
-# so the following line is removed.
-# df["rating"] = df["rating"].fillna("Unknown")
-
-"""# New Section"""
-
-# Identify current column names
 current_columns = df.columns.tolist()
 
-# Create a new list of column names, renaming the first 'price_eur' to 'price_usd'
 new_columns = []
 first_price_eur_found = False
 
@@ -121,9 +107,6 @@ df.columns = new_columns
  # verify the renamed columns
 df
 
-"""# New Section"""
-
-# Final check
 print(f"Rows: {len(df)}")
 print(f"Columns: {list(df.columns)}")
 print(f"Data types:\n{df.dtypes}")
@@ -134,11 +117,7 @@ df.to_csv("verify_output.csv", index=False)
 print(f"Rows: {len(df)}  |  Columns: {list(df.columns)}")
 df
 
-# Add a price tier for dashboard grouping
-# .apply() runs a function on every value in the column
-# The lambda checks: is the price below 20? → "Budget"
-#                     below 40? → "Mid-range"
-#                     otherwise → "Premium"
+
 df["price_tier"] = df["price_eur"].apply(
     lambda p: "Budget" if p < 30
     else ("Mid-range" if p < 50 else "Premium")
@@ -154,11 +133,7 @@ df["price_tier"] = df["price_eur"].apply(
 
 df[["title", "price_eur", "price_tier"]]
 
-# Example: drop the raw price string (you already have price_eur)
-# errors="ignore" means: if the column does not exist, do nothing
 df = df.drop(columns=["price_raw"], errors="ignore")
-
- # verify which columns remain
 
 
 from supabase import create_client
@@ -185,7 +160,6 @@ for _, row in df.iterrows():
 
 result = supabase.table("Games").insert(rows).execute()
 print(f"✅ Inserted {len(rows)} rows into Supabase")
-
 
 
 
